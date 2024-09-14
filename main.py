@@ -55,11 +55,11 @@ def download_files():
         print("MovementReports already downloaded and extracted.")
 '''
 
-# Function to list all submarine serial numbers
+# Funktion för att lista alla ubåtars serienummer
 def list_submarine_serials(folder):
     return [filename.split('.')[0] for filename in os.listdir(folder) if filename.endswith(".txt")]
 
-# Function to allow the user to select a submarine by entering the serial number
+# Funktion för att låta användaren välja en ubåt genom att ange serienummer
 def select_submarine(serials):
     while True:
         serial_number = input("Ange serienumret för den ubåt du vill välja: ")
@@ -68,7 +68,7 @@ def select_submarine(serials):
         else:
             print("Ubåten hittades inte. Försök igen.")
 
-# Function to find closest, farthest, highest, and lowest submarines
+# Funktion för att hitta närmaste och längst bort, högst och lägst ubåtar
 def find_extreme_submarines(submarines):
     sorted_by_distance = sorted(submarines.values(), key=lambda sub: sub.distance_from_start())
     closest_sub = sorted_by_distance[0]
@@ -84,37 +84,37 @@ def find_extreme_submarines(submarines):
     print(f"Lägsta ubåt: {lowest_sub.serial_number}, Höjd: {lowest_sub.position[0]}")
 
 def main():
-    # Ensure necessary directories exist
+    # Se till att nödvändiga mappar finns
     os.makedirs('logs', exist_ok=True)
 
-    # List all submarine serial numbers
+    # Lista alla ubåtars serienummer
     print("Lister alla ubåtar...")
     submarine_serials = list_submarine_serials('MovementReports')
 
-    # Initialize the secret manager
+    # Initiera SecretManager med korrekta filvägar
     secret_manager = SecretManager('Secrets/Secrets/SecretKEY.txt', 'Secrets/Secrets/ActivationCodes.txt')
 
-    # Main loop to allow processing multiple submarines
+    # Huvudloop för att tillåta bearbetning av flera ubåtar
     while True:
-        # Let the user select a submarine
+        # Låt användaren välja en ubåt
         selected_serial = select_submarine(submarine_serials)
         selected_submarine = Submarine(selected_serial)
         submarines = {selected_serial: selected_submarine}
 
-        # Load movements for the selected submarine and measure the time
+        # Ladda rörelser för den valda ubåten och mät tiden
         print(f"\nLaddar rörelser för ubåt {selected_serial}...")
         start_time = time.time()
         selected_submarine.load_movements(f'MovementReports/{selected_serial}.txt')
         end_time = time.time()
         print(f"Rörelser laddade på {end_time - start_time:.2f} sekunder.")
 
-        # Display information about the selected submarine
+        # Visa information om den valda ubåten
         print(f"\nUbåt: {selected_submarine.serial_number}")
         print(f"Position: Höjd {selected_submarine.position[0]}, Horisontell {selected_submarine.position[1]}")
         print(f"Totalt antal rörelser: {len(selected_submarine.movement_log)}")
         print("")
 
-        # Ask if the user wants to process other submarines
+        # Fråga om användaren vill bearbeta andra ubåtar
         bearbeta_andra = input("Vill du bearbeta rörelser för några andra ubåtar för att kontrollera kollisioner och torpedrisk? (j/n): ").lower()
         if bearbeta_andra == 'j':
             try:
@@ -126,34 +126,34 @@ def main():
             andra_serialer = [s for s in submarine_serials if s != selected_serial]
             slumpade_serialer = random.sample(andra_serialer, min(antal_andra_ubatar, len(andra_serialer)))
 
-            # Load movements for the selected submarines
+            # Ladda rörelser för de valda ubåtarna
             for serial in slumpade_serialer:
                 submarine = Submarine(serial)
                 submarine.load_movements(f'MovementReports/{serial}.txt')
                 submarines[serial] = submarine
 
-            # Check for collisions
+            # Kontrollera kollisioner
             for sub in submarines.values():
                 if sub.serial_number != selected_submarine.serial_number:
                     selected_submarine.check_collision(sub)
 
-            # Check torpedo firing
+            # Kontrollera möjligheten att avfyra torped i alla riktningar enligt uppgiftskravet
             print("Kontrollerar möjligheten att avfyra torped...")
             directions = ['forward', 'up', 'down']
             for direction in directions:
                 can_fire = selected_submarine.can_fire_torpedo(direction, submarines)
                 if can_fire:
-                    print(f"Ubåten kan avfyra torped {direction} utan risk för friendly fire.")
+                    print(f"Ubåten {selected_serial} kan avfyra torped {direction} utan risk för friendly fire.")
                 else:
-                    print(f"Varning: Risk för friendly fire vid avfyrning {direction}.")
+                    print(f"Varning: Ubåten {selected_serial} riskerar friendly fire vid avfyrning {direction}!")
 
-            # Find extreme submarines in this subset
+            # Hitta närmaste och längst bort, högsta och lägsta ubåtar i denna delmängd
             find_extreme_submarines(submarines)
 
         else:
             print("Ingen ytterligare bearbetning av andra ubåtar.")
 
-        # Process sensor data for the selected submarine
+        # Bearbeta sensordata för den valda ubåten
         print(f"\nBearbetar sensordata för ubåt {selected_serial}...")
         sensor_file = f"Sensordata/Sensordata/{selected_serial}.txt"
         if os.path.exists(sensor_file):
@@ -164,15 +164,15 @@ def main():
             sensor_data.log_errors()
         else:
             print("Ingen sensordata tillgänglig för denna ubåt.")
-            # Log the missing sensor data
+            # Logga avsaknad av sensordata
             from logger import log_error
             log_error(f"No sensor data available for submarine {selected_serial}")
 
-        # Activate Nuke for the selected submarine
+        # Aktivera Nuke för den valda ubåten
         print("\nAktiverar Nuke för vald ubåt...")
         secret_manager.activate_nuke(selected_serial)
 
-        # Ask if the user wants to process another submarine or exit
+        # Fråga om användaren vill analysera en annan ubåt
         continue_choice = input("\nVill du analysera en annan ubåt? (j/n): ").lower()
         if continue_choice != 'j':
             print("Avslutar programmet.")
