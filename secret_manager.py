@@ -1,5 +1,6 @@
 import hashlib
 import datetime
+from logger import log_error
 
 class SecretManager:
     def __init__(self, secret_key_file, activation_code_file):
@@ -10,10 +11,16 @@ class SecretManager:
 
     def load_secrets(self, filepath):
         secrets = {}
-        with open(filepath, 'r') as file:
-            for line in file:
-                serial, key = line.strip().split(':')
-                secrets[serial.strip()] = key.strip()
+        try:
+            with open(filepath, 'r') as file:
+                for line in file:
+                    parts = line.strip().split(':')
+                    if len(parts) != 2:
+                        continue
+                    serial, key = parts
+                    secrets[serial.strip()] = key.strip()
+        except Exception as e:
+            log_error(f"Error loading secrets from {filepath}: {e}")
         return secrets
 
     def activate_nuke(self, serial_number):
@@ -26,3 +33,4 @@ class SecretManager:
             print(f"Nuke activated for {serial_number} with hash: {activation_hash}")
         else:
             print(f"No keys or activation codes found for submarine {serial_number}")
+            log_error(f"Activation failed for {serial_number}: Missing key or activation code")
