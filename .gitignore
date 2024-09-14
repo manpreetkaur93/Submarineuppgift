@@ -1,19 +1,28 @@
-# Ignorera alla zip-filer
+# Ignore all zip files
 *.zip
 
-# Ignorera alla filer i Secrets-mappen, men behåll strukturen och två specifika filer
+# Ignore all files in Secrets folder, but keep the structure and two specific files
 Secrets/*
 !Secrets/SecretKEY.txt
 !Secrets/ActivationCodes.txt
-!Secrets/
 
-# Ignorera alla filer i Sensordata-mappen, men behåll mappen
+# Ignore all files in Sensordata folder, including subdirectories
+Sensordata/**/*
 Sensordata/*
-!Sensordata/
 
-# Ignorera alla filer i MovementReports-mappen, men behåll mappen
+# Keep the Sensordata folder
+!Sensordata/!Sensordata/
+
+# Ignore all files in MovementReports folder, including subdirectories
+MovementReports/**/*
 MovementReports/*
-!MovementReports/
 
-# Ignorera Python-cachefiler
+# Keep the MovementReports folder
+!MovementReports/MovementReports/
+
+# Ignore logs directory and its contents
+logs/
+logs/**
+
+# Ignore Python cache files
 __pycache__/

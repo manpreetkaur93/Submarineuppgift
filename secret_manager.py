@@ -1,4 +1,3 @@
-# secret_manager.py
 import hashlib
 import datetime
 
@@ -13,7 +12,7 @@ class SecretManager:
         secrets = {}
         with open(filepath, 'r') as file:
             for line in file:
-                serial, key = line.split(':')
+                serial, key = line.strip().split(':')
                 secrets[serial.strip()] = key.strip()
         return secrets
 
@@ -24,6 +23,6 @@ class SecretManager:
             date_str = datetime.datetime.now().strftime('%Y-%m-%d')
             combined_string = date_str + secret_key + activation_code
             activation_hash = hashlib.sha256(combined_string.encode()).hexdigest()
-            print(f"Nuke activation hash for {serial_number}: {activation_hash}")
+            print(f"Nuke activated for {serial_number} with hash: {activation_hash}")
         else:
             print(f"No keys or activation codes found for submarine {serial_number}")
