@@ -6,8 +6,8 @@ class Submarine:
         self.serial_number = serial_number
         self.position = [0, 0]  # [depth, horizontal]
         self.movement_log = []
-        self.positions = {}  # Ändra till ordbok för att lagra positioner med tidsindex
-        self.time_index = 0  # Introducera tidsindex
+        self.positions = {}  # Ordbok för att lagra positioner med tidsindex
+        self.time_index = 0  # Tidsindex
         self.positions[self.time_index] = tuple(self.position)
 
     @movement_logger
@@ -31,18 +31,18 @@ class Submarine:
         self.positions[self.time_index] = tuple(self.position)
 
     def check_collision(self, other_submarine):
-     collision_positions = []
-     common_times = set(self.positions.keys()).intersection(other_submarine.positions.keys())
-     for time in common_times:
-        pos1 = self.positions[time]
-        pos2 = other_submarine.positions[time]
-        if pos1 == pos2:
-            collision_positions.append((pos1, time))
-     if collision_positions:
-        for pos, time in collision_positions:
-            log_collision(self, other_submarine, pos, time)
-            print(f"Kollision upptäckt mellan {self.serial_number} och {other_submarine.serial_number} på position {pos} vid tid {time}")
-     return collision_positions  
+        collision_positions = []
+        common_times = set(self.positions.keys()).intersection(other_submarine.positions.keys())
+        for time in common_times:
+            pos1 = self.positions[time]
+            pos2 = other_submarine.positions[time]
+            if pos1 == pos2:
+                collision_positions.append((pos1, time))
+        if collision_positions:
+            for pos, time in collision_positions:
+                log_collision(self, other_submarine, pos, time)
+                print(f"Kollision upptäckt mellan {self.serial_number} och {other_submarine.serial_number} på position {pos} vid tid {time}")
+        return collision_positions
 
     def load_movements(self, filepath):
         if not os.path.exists(filepath):

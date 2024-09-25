@@ -68,18 +68,33 @@ def select_submarine(serials):
         else:
             print("Ubåten hittades inte. Försök igen.")
 
-# Funktion för att hitta närmaste och längst bort, högst och lägst ubåtar
-def find_extreme_submarines(submarines):
-    sorted_by_distance = sorted(submarines.values(), key=lambda sub: sub.distance_from_start())
+# Funktion för att hitta närmaste och längst bort, högsta och lägsta ubåtar relativt vald ubåt
+def find_extreme_submarines_relative_to_selected(submarines, selected_submarine):
+    # Exkludera den valda ubåten från jämförelsen
+    other_submarines = [sub for sub in submarines.values() if sub.serial_number != selected_submarine.serial_number]
+    if not other_submarines:
+        print("Inga andra ubåtar att jämföra med.")
+        return
+
+    # Beräkna avstånd från den valda ubåten
+    def distance_from_selected(sub):
+        delta_depth = sub.position[0] - selected_submarine.position[0]
+        delta_horizontal = sub.position[1] - selected_submarine.position[1]
+        return (delta_depth**2 + delta_horizontal**2) ** 0.5
+
+    sorted_by_distance = sorted(other_submarines, key=distance_from_selected)
     closest_sub = sorted_by_distance[0]
     farthest_sub = sorted_by_distance[-1]
+    closest_distance = distance_from_selected(closest_sub)
+    farthest_distance = distance_from_selected(farthest_sub)
 
-    sorted_by_depth = sorted(submarines.values(), key=lambda sub: sub.position[0])
+    # För djup, lägre värde innebär högre upp (mindre djup)
+    sorted_by_depth = sorted(other_submarines, key=lambda sub: sub.position[0])
     highest_sub = sorted_by_depth[0]
     lowest_sub = sorted_by_depth[-1]
 
-    print(f"Närmaste ubåt: {closest_sub.serial_number}, Avstånd: {closest_sub.distance_from_start():.2f} meter")
-    print(f"Längst bort ubåt: {farthest_sub.serial_number}, Avstånd: {farthest_sub.distance_from_start():.2f} meter")
+    print(f"Närmaste ubåt: {closest_sub.serial_number}, Avstånd från vald ubåt: {closest_distance:.2f} meter")
+    print(f"Längst bort ubåt: {farthest_sub.serial_number}, Avstånd från vald ubåt: {farthest_distance:.2f} meter")
     print(f"Högsta ubåt: {highest_sub.serial_number}, Höjd: {highest_sub.position[0]} meter")
     print(f"Lägsta ubåt: {lowest_sub.serial_number}, Höjd: {lowest_sub.position[0]} meter")
 
@@ -114,80 +129,97 @@ def main():
         print(f"Totalt antal rörelser: {len(selected_submarine.movement_log)}")
         print("")
 
-        # Fråga om användaren vill bearbeta andra ubåtar
-        bearbeta_andra = input("Vill du bearbeta rörelser för några andra ubåtar för att kontrollera kollisioner och torpedrisk? (j/n): ").lower()
-        if bearbeta_andra == 'j':
-            try:
-                antal_andra_ubatar = int(input("Ange antal andra ubåtar att bearbeta (t.ex. 100): "))
-            except ValueError:
-                print("Ogiltigt antal. Använder 100 som standard.")
-                antal_andra_ubatar = 100
+        # Meny för att välja åtgärder
+        while True:
+            print("\nVälj en åtgärd:")
+            print("1. Kontrollera kollisioner och torpedrisk")
+            print("2. Analysera sensordata")
+            print("3. Aktivera Nuke")
+            print("4. Visa närmaste och längst bort, högsta och lägsta ubåtar från vald ubåt")
+            print("5. Välj en annan ubåt")
+            print("6. Avsluta programmet")
+            choice = input("Ange ditt val (1-6): ")
 
-            andra_serialer = [s for s in submarine_serials if s != selected_serial]
-            slumpade_serialer = random.sample(andra_serialer, min(antal_andra_ubatar, len(andra_serialer)))
+            if choice == '1':
+                # Bearbeta andra ubåtar för kollisioner och torpedrisk
+                try:
+                    antal_andra_ubatar = int(input("Ange antal andra ubåtar att bearbeta (t.ex. 100): "))
+                except ValueError:
+                    print("Ogiltigt antal. Använder 100 som standard.")
+                    antal_andra_ubatar = 100
 
-            # Ladda rörelser för de valda ubåtarna
-            for serial in slumpade_serialer:
-                submarine = Submarine(serial)
-                submarine.load_movements(f'MovementReports/{serial}.txt')
-                submarines[serial] = submarine
+                andra_serialer = [s for s in submarine_serials if s != selected_serial]
+                slumpade_serialer = random.sample(andra_serialer, min(antal_andra_ubatar, len(andra_serialer)))
 
-            # Kontrollera kollisioner
-            # Kontrollera kollisioner
-            total_collisions = 0
-            for sub in submarines.values():
-               if sub.serial_number != selected_submarine.serial_number:
-                collisions = selected_submarine.check_collision(sub)
-                if collisions:
-            # Exkludera kollisioner på position (0, 0)
-                 filtered_collisions = [(pos, time) for pos, time in collisions if pos != (0, 0)]
-                 num_collisions = len(filtered_collisions)
-                 total_collisions += num_collisions
-                 if num_collisions > 0:
-                  print(f"Kollisioner upptäckta mellan {selected_submarine.serial_number} och {sub.serial_number}: {num_collisions} st")
-            print(f"Totalt antal kollisioner för ubåt {selected_submarine.serial_number}: {total_collisions}")
+                # Ladda rörelser för de valda ubåtarna
+                for serial in slumpade_serialer:
+                    if serial not in submarines:
+                        submarine = Submarine(serial)
+                        submarine.load_movements(f'MovementReports/{serial}.txt')
+                        submarines[serial] = submarine
 
+                # Kontrollera kollisioner
+                total_collisions = 0
+                for sub in submarines.values():
+                    if sub.serial_number != selected_submarine.serial_number:
+                        collisions = selected_submarine.check_collision(sub)
+                        if collisions:
+                            # Exkludera kollisioner på position (0, 0)
+                            filtered_collisions = [(pos, time) for pos, time in collisions if pos != (0, 0)]
+                            num_collisions = len(filtered_collisions)
+                            total_collisions += num_collisions
+                            if num_collisions > 0:
+                                print(f"Kollisioner upptäckta mellan {selected_submarine.serial_number} och {sub.serial_number}: {num_collisions} st")
+                print(f"Totalt antal kollisioner för ubåt {selected_submarine.serial_number}: {total_collisions}")
 
-            # Kontrollera möjligheten att avfyra torped i alla riktningar
-            print("Kontrollerar möjligheten att avfyra torped...")
-            directions = ['forward', 'up', 'down']
-            for direction in directions:
-                can_fire = selected_submarine.can_fire_torpedo(direction, submarines)
-                if can_fire:
-                    print(f"Ubåten {selected_serial} kan avfyra torped {direction} utan risk för friendly fire.")
+                # Kontrollera möjligheten att avfyra torped i alla riktningar
+                print("Kontrollerar möjligheten att avfyra torped...")
+                directions = ['forward', 'up', 'down']
+                for direction in directions:
+                    can_fire = selected_submarine.can_fire_torpedo(direction, submarines)
+                    if can_fire:
+                        print(f"Ubåten {selected_serial} kan avfyra torped {direction} utan risk för friendly fire.")
+                    else:
+                        print(f"Varning: Ubåten {selected_serial} riskerar friendly fire vid avfyrning {direction}!")
+
+            elif choice == '2':
+                # Bearbeta sensordata för den valda ubåten
+                print(f"\nBearbetar sensordata för ubåt {selected_serial}...")
+                sensor_file = f"Sensordata/Sensordata/{selected_serial}.txt"
+                if os.path.exists(sensor_file):
+                    sensor_data = SensorData(sensor_file)
+                    sensor_data.load_sensor_data()
+                    sensor_data.count_errors()
+                    sensor_data.display_repeated_errors()
+                    sensor_data.log_errors()
                 else:
-                    print(f"Varning: Ubåten {selected_serial} riskerar friendly fire vid avfyrning {direction}!")
+                    print("Ingen sensordata tillgänglig för denna ubåt.")
+                    # Logga avsaknad av sensordata
+                    from logger import log_error
+                    log_error(f"No sensor data available for submarine {selected_serial}")
 
-            # Hitta närmaste och längst bort, högsta och lägsta ubåtar i denna delmängd
-            find_extreme_submarines(submarines)
+            elif choice == '3':
+                # Aktivera Nuke för den valda ubåten
+                print("\nAktiverar Nuke för vald ubåt...")
+                secret_manager.activate_nuke(selected_serial)
 
-        else:
-            print("Ingen ytterligare bearbetning av andra ubåtar.")
+            elif choice == '4':
+                # Visa närmaste och längst bort, högsta och lägsta ubåtar från vald ubåt
+                if len(submarines) > 1:
+                    find_extreme_submarines_relative_to_selected(submarines, selected_submarine)
+                else:
+                    print("Inga andra ubåtar har bearbetats ännu. Välj först att bearbeta andra ubåtar.")
 
-        # Bearbeta sensordata för den valda ubåten
-        print(f"\nBearbetar sensordata för ubåt {selected_serial}...")
-        sensor_file = f"Sensordata/Sensordata/{selected_serial}.txt"
-        if os.path.exists(sensor_file):
-            sensor_data = SensorData(sensor_file)
-            sensor_data.load_sensor_data()
-            sensor_data.count_errors()
-            sensor_data.display_repeated_errors()
-            sensor_data.log_errors()
-        else:
-            print("Ingen sensordata tillgänglig för denna ubåt.")
-            # Logga avsaknad av sensordata
-            from logger import log_error
-            log_error(f"No sensor data available for submarine {selected_serial}")
+            elif choice == '5':
+                # Välj en annan ubåt
+                break  # Gå tillbaka till början av huvudloopen
 
-        # Aktivera Nuke för den valda ubåten
-        print("\nAktiverar Nuke för vald ubåt...")
-        secret_manager.activate_nuke(selected_serial)
+            elif choice == '6':
+                print("Avslutar programmet.")
+                exit()
 
-        # Fråga om användaren vill analysera en annan ubåt
-        continue_choice = input("\nVill du analysera en annan ubåt? (j/n): ").lower()
-        if continue_choice != 'j':
-            print("Avslutar programmet.")
-            break
+            else:
+                print("Ogiltigt val. Försök igen.")
 
 if __name__ == "__main__":
     main()
