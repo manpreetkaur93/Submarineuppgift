@@ -76,27 +76,41 @@ def find_extreme_submarines_relative_to_selected(submarines, selected_submarine)
         print("Inga andra ubåtar att jämföra med.")
         return
 
+    # Visa information om den valda ubåten först
+    print(f"Vald ubåt: {selected_submarine.serial_number}")
+    print(f"Position: Höjd {selected_submarine.position[0]} meter, Horisontell {selected_submarine.position[1]} meter\n")
+
     # Beräkna avstånd från den valda ubåten
     def distance_from_selected(sub):
         delta_depth = sub.position[0] - selected_submarine.position[0]
         delta_horizontal = sub.position[1] - selected_submarine.position[1]
         return (delta_depth**2 + delta_horizontal**2) ** 0.5
 
+    # Sortera ubåtarna baserat på avstånd och djup
     sorted_by_distance = sorted(other_submarines, key=distance_from_selected)
+    sorted_by_depth = sorted(other_submarines, key=lambda sub: sub.position[0])
+
+    # Hämta närmaste och längst bort ubåt
     closest_sub = sorted_by_distance[0]
     farthest_sub = sorted_by_distance[-1]
     closest_distance = distance_from_selected(closest_sub)
     farthest_distance = distance_from_selected(farthest_sub)
 
-    # För djup, lägre värde innebär högre upp (mindre djup)
-    sorted_by_depth = sorted(other_submarines, key=lambda sub: sub.position[0])
+    # Hämta högsta och lägsta ubåt
     highest_sub = sorted_by_depth[0]
     lowest_sub = sorted_by_depth[-1]
 
-    print(f"Närmaste ubåt: {closest_sub.serial_number}, Avstånd från vald ubåt: {closest_distance:.2f} meter")
-    print(f"Längst bort ubåt: {farthest_sub.serial_number}, Avstånd från vald ubåt: {farthest_distance:.2f} meter")
-    print(f"Högsta ubåt: {highest_sub.serial_number}, Höjd: {highest_sub.position[0]} meter")
-    print(f"Lägsta ubåt: {lowest_sub.serial_number}, Höjd: {lowest_sub.position[0]} meter")
+    # Presentera listan över ubåtar
+    print("Lista över ubåtar i förhållande till vald ubåt:")
+    print(f"- Närmaste ubåt: {closest_sub.serial_number}, Avstånd: {closest_distance:.2f} meter")
+    print(f"- Längst bort ubåt: {farthest_sub.serial_number}, Avstånd: {farthest_distance:.2f} meter")
+    print(f"- Högsta ubåt: {highest_sub.serial_number}, Höjd: {highest_sub.position[0]} meter")
+    print(f"- Lägsta ubåt: {lowest_sub.serial_number}, Höjd: {lowest_sub.position[0]} meter")
+
+def calculate_distance(sub1, sub2):
+    delta_depth = sub1.position[0] - sub2.position[0]
+    delta_horizontal = sub1.position[1] - sub2.position[1]
+    return (delta_depth**2 + delta_horizontal**2) ** 0.5
 
 def main():
     # Se till att nödvändiga mappar finns
@@ -132,16 +146,15 @@ def main():
         # Meny för att välja åtgärder
         while True:
             print("\nVälj en åtgärd:")
-            print("1. Kontrollera kollisioner och torpedrisk")
+            print("1. Bearbeta andra ubåtar")
             print("2. Analysera sensordata")
             print("3. Aktivera Nuke")
-            print("4. Visa närmaste och längst bort, högsta och lägsta ubåtar från vald ubåt")
-            print("5. Välj en annan ubåt")
-            print("6. Avsluta programmet")
-            choice = input("Ange ditt val (1-6): ")
+            print("4. Välj en annan ubåt")
+            print("5. Avsluta programmet")  # Lagt till detta alternativ
+            choice = input("Ange ditt val (1-5): ")
 
             if choice == '1':
-                # Bearbeta andra ubåtar för kollisioner och torpedrisk
+                # Bearbeta andra ubåtar
                 try:
                     antal_andra_ubatar = int(input("Ange antal andra ubåtar att bearbeta (t.ex. 100): "))
                 except ValueError:
@@ -149,38 +162,70 @@ def main():
                     antal_andra_ubatar = 100
 
                 andra_serialer = [s for s in submarine_serials if s != selected_serial]
-                slumpade_serialer = random.sample(andra_serialer, min(antal_andra_ubatar, len(andra_serialer)))
+                # Välj slumpmässigt ut ett större antal ubåtar för att öka chansen att hitta de närmaste
+                slumpade_serialer = random.sample(andra_serialer, min(antal_andra_ubatar * 2, len(andra_serialer)))
 
-                # Ladda rörelser för de valda ubåtarna
+                # Ladda rörelser för de slumpmässigt valda ubåtarna
                 for serial in slumpade_serialer:
                     if serial not in submarines:
                         submarine = Submarine(serial)
                         submarine.load_movements(f'MovementReports/{serial}.txt')
                         submarines[serial] = submarine
 
-                # Kontrollera kollisioner
-                total_collisions = 0
-                for sub in submarines.values():
-                    if sub.serial_number != selected_submarine.serial_number:
-                        collisions = selected_submarine.check_collision(sub)
-                        if collisions:
-                            # Exkludera kollisioner på position (0, 0)
-                            filtered_collisions = [(pos, time) for pos, time in collisions if pos != (0, 0)]
-                            num_collisions = len(filtered_collisions)
-                            total_collisions += num_collisions
-                            if num_collisions > 0:
-                                print(f"Kollisioner upptäckta mellan {selected_submarine.serial_number} och {sub.serial_number}: {num_collisions} st")
-                print(f"Totalt antal kollisioner för ubåt {selected_submarine.serial_number}: {total_collisions}")
+                # Beräkna avstånd och sortera ubåtarna
+                sorted_submarines = sorted(
+                    [sub for sub in submarines.values() if sub.serial_number != selected_serial],
+                    key=lambda sub: calculate_distance(selected_submarine, sub)
+                )
 
-                # Kontrollera möjligheten att avfyra torped i alla riktningar
-                print("Kontrollerar möjligheten att avfyra torped...")
-                directions = ['forward', 'up', 'down']
-                for direction in directions:
-                    can_fire = selected_submarine.can_fire_torpedo(direction, submarines)
-                    if can_fire:
-                        print(f"Ubåten {selected_serial} kan avfyra torped {direction} utan risk för friendly fire.")
+                # Välj de närmaste ubåtarna
+                narmaste_submariner = sorted_submarines[:antal_andra_ubatar]
+
+                # Skapa en ny ordbok med de bearbetade ubåtarna
+                processed_submarines = {sub.serial_number: sub for sub in narmaste_submariner}
+                processed_submarines[selected_serial] = selected_submarine  # Lägg till den valda ubåten
+
+                # Visa ny meny för kollisioner och distans
+                while True:
+                    print("\nVälj en åtgärd:")
+                    print("1. Kontrollera kollisioner och torpedrisk")
+                    print("2. Visa närmaste och längst bort, högsta och lägsta ubåtar från vald ubåt")
+                    print("3. Tillbaka till huvudmenyn")
+                    sub_choice = input("Ange ditt val (1-3): ")
+
+                    if sub_choice == '1':
+                        # Kontrollera kollisioner
+                        total_collisions = 0
+                        for sub in narmaste_submariner:
+                            collisions = selected_submarine.check_collision(sub)
+                            if collisions:
+                                # Exkludera kollisioner på position (0, 0) vid tid 0
+                                filtered_collisions = [(pos, time) for pos, time in collisions if not (pos == (0, 0) and time == 0)]
+                                num_collisions = len(filtered_collisions)
+                                total_collisions += num_collisions
+                                if num_collisions > 0:
+                                    print(f"Kollisioner upptäckta mellan {selected_submarine.serial_number} och {sub.serial_number}: {num_collisions} st")
+                        print(f"Totalt antal kollisioner för ubåt {selected_submarine.serial_number}: {total_collisions}")
+
+                        # Kontrollera möjligheten att avfyra torped i alla riktningar
+                        print("Kontrollerar möjligheten att avfyra torped...")
+                        directions = ['forward', 'up', 'down']
+                        for direction in directions:
+                            can_fire = selected_submarine.can_fire_torpedo(direction, processed_submarines)
+                            if can_fire:
+                                print(f"Ubåten {selected_serial} kan avfyra torped {direction} utan risk för friendly fire.")
+                            else:
+                                print(f"Varning: Ubåten {selected_serial} riskerar friendly fire vid avfyrning {direction}!")
+
+                    elif sub_choice == '2':
+                        # Visa närmaste och längst bort ubåtar
+                        find_extreme_submarines_relative_to_selected(processed_submarines, selected_submarine)
+
+                    elif sub_choice == '3':
+                        # Tillbaka till huvudmenyn
+                        break
                     else:
-                        print(f"Varning: Ubåten {selected_serial} riskerar friendly fire vid avfyrning {direction}!")
+                        print("Ogiltigt val. Försök igen.")
 
             elif choice == '2':
                 # Bearbeta sensordata för den valda ubåten
@@ -204,17 +249,11 @@ def main():
                 secret_manager.activate_nuke(selected_serial)
 
             elif choice == '4':
-                # Visa närmaste och längst bort, högsta och lägsta ubåtar från vald ubåt
-                if len(submarines) > 1:
-                    find_extreme_submarines_relative_to_selected(submarines, selected_submarine)
-                else:
-                    print("Inga andra ubåtar har bearbetats ännu. Välj först att bearbeta andra ubåtar.")
-
-            elif choice == '5':
                 # Välj en annan ubåt
                 break  # Gå tillbaka till början av huvudloopen
 
-            elif choice == '6':
+            elif choice == '5':
+                # Avsluta programmet
                 print("Avslutar programmet.")
                 exit()
 

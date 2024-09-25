@@ -27,7 +27,9 @@ class SensorData:
                 self.error_count[error_positions] = self.error_count.get(error_positions, 0) + 1
 
     def display_repeated_errors(self):
-        for error_positions, count in self.error_count.items():
+        # Sortera error_count baserat på antal fel i fallande ordning
+        sorted_errors = sorted(self.error_count.items(), key=lambda item: item[1], reverse=True)
+        for error_positions, count in sorted_errors:
             if count > 1:
                 sensors = ', '.join([f"sensor {pos} av {self.total_sensors}" for pos in error_positions])
                 print(f"Fel på {sensors} inträffade {count} gånger")
