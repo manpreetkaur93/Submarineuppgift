@@ -4,13 +4,17 @@ import os
 from logger import log_error
 
 class SecretManager:
+    """ Hanterar säkerhetsaspekter som inläsning av hemliga nycklar och aktiveringskoder."""
+
     def __init__(self, secret_key_file, activation_code_file):
+        """Initierar SecretManager."""
         self.secret_key_file = secret_key_file
         self.activation_code_file = activation_code_file
         self.keys = self.load_secrets(secret_key_file)
         self.activation_codes = self.load_secrets(activation_code_file)
 
     def load_secrets(self, filepath):
+        """Laddar secret"""
         secrets = {}
         if not os.path.exists(filepath):
             print(f"Fil hittades inte: {filepath}")
@@ -30,6 +34,7 @@ class SecretManager:
         return secrets
 
     def activate_nuke(self, serial_number):
+        """Aktiverar Nuke för en ubåt om korrekt nyckel och aktiveringskod finns."""
         if serial_number in self.keys and serial_number in self.activation_codes:
             secret_key = self.keys[serial_number]
             activation_code = self.activation_codes[serial_number]

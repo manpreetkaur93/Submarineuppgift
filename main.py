@@ -3,16 +3,15 @@ import time
 from submarine import Submarine
 from sensor_data import SensorData
 from secret_manager import SecretManager
-from logger import log_collision
+from logger import log_collision, log_error
 import random  # Importera random för att välja slumpmässiga ubåtar
 
-# Kommenterad kod för nedladdning och uppackning av filer
+# Kommenterad kod för nedladdning och uppackning av filer för att dessa kördes varje gång jag kör programmet även efter att jag la till ' if not os.path.exists' delen var programmet långsamt därför commeneterar dessa rader
 '''
-# Import för nedladdning och uppackning
 import gdown
 import zipfile
 
-# Google Drive länkar (uppdatera dessa med dina faktiska länkar)
+# Google Drive länkar
 SECRETS_URL = 'https://drive.google.com/uc?export=download&id=15PeR3Rv4FJbvCu8w87-iX2ml59GutgWP'
 SENSORDATA_URL = 'https://drive.google.com/uc?export=download&id=1hkyoC2iR_Z6FXcz4nlGzpmwWD1IlU3il'
 MOVEMENTREPORTS_URL = 'https://drive.google.com/uc?export=download&id=1potInXCTfjOijqXRo3XNL0_NwhbkhI0C'
@@ -54,13 +53,12 @@ def download_files():
     else:
         print("MovementReports already downloaded and extracted.")
 '''
-
-# Funktion för att lista alla ubåtars serienummer
 def list_submarine_serials(folder):
+    """Listar alla ubåtars serienummer i en given mapp."""
     return [filename.split('.')[0] for filename in os.listdir(folder) if filename.endswith(".txt")]
 
-# Funktion för att låta användaren välja en ubåt genom att ange serienummer
 def select_submarine(serials):
+    """Låter användaren välja en ubåt genom att ange serienummer."""
     while True:
         serial_number = input("Ange serienumret för den ubåt du vill välja: ")
         if serial_number in serials:
@@ -68,39 +66,39 @@ def select_submarine(serials):
         else:
             print("Ubåten hittades inte. Försök igen.")
 
-# Funktion för att hitta närmaste och längst bort, högsta och lägsta ubåtar relativt vald ubåt
 def find_extreme_submarines_relative_to_selected(submarines, selected_submarine):
+    """Hittar och visar den närmaste, längst bort, högsta och lägsta ubåten relativt den valda ubåten."""
     # Exkludera den valda ubåten från jämförelsen
     other_submarines = [sub for sub in submarines.values() if sub.serial_number != selected_submarine.serial_number]
     if not other_submarines:
         print("Inga andra ubåtar att jämföra med.")
         return
 
-    # Visa information om den valda ubåten först
+    # Visar information om valda ubåten först
     print(f"Vald ubåt: {selected_submarine.serial_number}")
     print(f"Position: Höjd {selected_submarine.position[0]} meter, Horisontell {selected_submarine.position[1]} meter\n")
 
-    # Beräkna avstånd från den valda ubåten
+    #Beräknar avstånd från den valda ubåten
     def distance_from_selected(sub):
         delta_depth = sub.position[0] - selected_submarine.position[0]
         delta_horizontal = sub.position[1] - selected_submarine.position[1]
         return (delta_depth**2 + delta_horizontal**2) ** 0.5
 
-    # Sortera ubåtarna baserat på avstånd och djup
+    # Sorterar ubåtarna baserat på avstånd och djup
     sorted_by_distance = sorted(other_submarines, key=distance_from_selected)
     sorted_by_depth = sorted(other_submarines, key=lambda sub: sub.position[0])
 
-    # Hämta närmaste och längst bort ubåt
+    # Hämtar närmaste och längst bort ubåt
     closest_sub = sorted_by_distance[0]
     farthest_sub = sorted_by_distance[-1]
     closest_distance = distance_from_selected(closest_sub)
     farthest_distance = distance_from_selected(farthest_sub)
 
-    # Hämta högsta och lägsta ubåt
+    # Hämtar högsta och lägsta ubåt
     highest_sub = sorted_by_depth[0]
     lowest_sub = sorted_by_depth[-1]
 
-    # Presentera listan över ubåtar
+    # Presenterar listan över ubåtar
     print("Lista över ubåtar i förhållande till vald ubåt:")
     print(f"- Närmaste ubåt: {closest_sub.serial_number}, Avstånd: {closest_distance:.2f} meter")
     print(f"- Längst bort ubåt: {farthest_sub.serial_number}, Avstånd: {farthest_distance:.2f} meter")
@@ -113,14 +111,12 @@ def calculate_distance(sub1, sub2):
     return (delta_depth**2 + delta_horizontal**2) ** 0.5
 
 def main():
-    # Se till att nödvändiga mappar finns
+    """Huvudfunktionen för programmet. Hanterar användarinteraktionen och anropar andra funktioner."""
     os.makedirs('logs', exist_ok=True)
-
-    # Lista alla ubåtars serienummer
     print("Lister alla ubåtar...")
     submarine_serials = list_submarine_serials('MovementReports')
 
-    # Initiera SecretManager med korrekta filvägar
+    # Initiera SecretManager
     secret_manager = SecretManager('Secrets/Secrets/SecretKEY.txt', 'Secrets/Secrets/ActivationCodes.txt')
 
     # Huvudloop för att tillåta bearbetning av flera ubåtar
@@ -130,27 +126,27 @@ def main():
         selected_submarine = Submarine(selected_serial)
         submarines = {selected_serial: selected_submarine}
 
-        # Ladda rörelser för den valda ubåten och mät tiden
+        # Laddar rörelser för den valda ubåten och mät tiden
         print(f"\nLaddar rörelser för ubåt {selected_serial}...")
         start_time = time.time()
         selected_submarine.load_movements(f'MovementReports/{selected_serial}.txt')
         end_time = time.time()
         print(f"Rörelser laddade på {end_time - start_time:.2f} sekunder.")
 
-        # Visa information om den valda ubåten
+        #information om den valda ubåten
         print(f"\nUbåt: {selected_submarine.serial_number}")
         print(f"Position: Höjd {selected_submarine.position[0]} meter, Horisontell {selected_submarine.position[1]} meter")
         print(f"Totalt antal rörelser: {len(selected_submarine.movement_log)}")
         print("")
 
-        # Meny för att välja åtgärder
+        # Välja åtgärder
         while True:
             print("\nVälj en åtgärd:")
             print("1. Bearbeta andra ubåtar")
             print("2. Analysera sensordata")
             print("3. Aktivera Nuke")
             print("4. Välj en annan ubåt")
-            print("5. Avsluta programmet")  # Lagt till detta alternativ
+            print("5. Avsluta programmet") 
             choice = input("Ange ditt val (1-5): ")
 
             if choice == '1':
@@ -183,9 +179,9 @@ def main():
 
                 # Skapa en ny ordbok med de bearbetade ubåtarna
                 processed_submarines = {sub.serial_number: sub for sub in narmaste_submariner}
-                processed_submarines[selected_serial] = selected_submarine  # Lägg till den valda ubåten
-
-                # Visa ny meny för kollisioner och distans
+                processed_submarines[selected_serial] = selected_submarine  
+                
+                # Visar ny meny
                 while True:
                     print("\nVälj en åtgärd:")
                     print("1. Kontrollera kollisioner och torpedrisk")
@@ -228,7 +224,7 @@ def main():
                         print("Ogiltigt val. Försök igen.")
 
             elif choice == '2':
-                # Bearbeta sensordata för den valda ubåten
+                # Bearbeta sensordata 
                 print(f"\nBearbetar sensordata för ubåt {selected_serial}...")
                 sensor_file = f"Sensordata/Sensordata/{selected_serial}.txt"
                 if os.path.exists(sensor_file):
@@ -240,7 +236,6 @@ def main():
                 else:
                     print("Ingen sensordata tillgänglig för denna ubåt.")
                     # Logga avsaknad av sensordata
-                    from logger import log_error
                     log_error(f"No sensor data available for submarine {selected_serial}")
 
             elif choice == '3':

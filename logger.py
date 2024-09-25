@@ -26,6 +26,7 @@ movement_log.setLevel(logging.INFO)
 movement_log.addHandler(movement_handler)
 
 def movement_logger(func):
+    """Dekorator för att logga ubåtens rörelser.funktionen."""
     def wrapper(self, *args, **kwargs):
         result = func(self, *args, **kwargs)
         movement = f"{func.__name__} {args[0]}" if args else func.__name__
@@ -34,9 +35,10 @@ def movement_logger(func):
     return wrapper
 
 def log_error(error_message):
+    """Loggar ett felmeddelande """
     error_logger.error(error_message)
 
 def log_collision(submarine1, submarine2, position, time):
+    """ Loggar en kollision mellan två ubåtar."""
     message = f"Kollision upptäckt mellan {submarine1.serial_number} och {submarine2.serial_number} på position {position} vid tid {time}"
     log_error(message)
-
