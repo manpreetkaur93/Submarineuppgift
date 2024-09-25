@@ -14,7 +14,7 @@ class SecretManager:
         self.activation_codes = self.load_secrets(activation_code_file)
 
     def load_secrets(self, filepath):
-        """Laddar secret"""
+        """Laddar secretkod o  nyckel"""
         secrets = {}
         if not os.path.exists(filepath):
             print(f"Fil hittades inte: {filepath}")
