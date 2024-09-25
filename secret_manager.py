@@ -1,5 +1,6 @@
 import hashlib
 import datetime
+import os
 from logger import log_error
 
 class SecretManager:
@@ -11,6 +12,10 @@ class SecretManager:
 
     def load_secrets(self, filepath):
         secrets = {}
+        if not os.path.exists(filepath):
+            print(f"Fil hittades inte: {filepath}")
+            log_error(f"Secret file not found: {filepath}")
+            return secrets
         try:
             with open(filepath, 'r') as file:
                 for line in file:
@@ -20,6 +25,7 @@ class SecretManager:
                     serial, key = parts
                     secrets[serial.strip()] = key.strip()
         except Exception as e:
+            print(f"Fel vid inläsning av hemligheter från {filepath}: {e}")
             log_error(f"Error loading secrets from {filepath}: {e}")
         return secrets
 
@@ -30,7 +36,7 @@ class SecretManager:
             date_str = datetime.datetime.now().strftime('%Y-%m-%d')
             combined_string = date_str + secret_key + activation_code
             activation_hash = hashlib.sha256(combined_string.encode()).hexdigest()
-            print(f"Nuke activated for {serial_number} with hash: {activation_hash}")
+            print(f"Nuke aktiverad för {serial_number} med hash: {activation_hash}")
         else:
-            print(f"No keys or activation codes found for submarine {serial_number}")
+            print(f"Inga nycklar eller aktiveringskoder hittades för ubåt {serial_number}")
             log_error(f"Activation failed for {serial_number}: Missing key or activation code")

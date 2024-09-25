@@ -78,10 +78,10 @@ def find_extreme_submarines(submarines):
     highest_sub = sorted_by_depth[0]
     lowest_sub = sorted_by_depth[-1]
 
-    print(f"Närmaste ubåt: {closest_sub.serial_number}, Avstånd: {closest_sub.distance_from_start()}")
-    print(f"Längst bort ubåt: {farthest_sub.serial_number}, Avstånd: {farthest_sub.distance_from_start()}")
-    print(f"Högsta ubåt: {highest_sub.serial_number}, Höjd: {highest_sub.position[0]}")
-    print(f"Lägsta ubåt: {lowest_sub.serial_number}, Höjd: {lowest_sub.position[0]}")
+    print(f"Närmaste ubåt: {closest_sub.serial_number}, Avstånd: {closest_sub.distance_from_start():.2f} meter")
+    print(f"Längst bort ubåt: {farthest_sub.serial_number}, Avstånd: {farthest_sub.distance_from_start():.2f} meter")
+    print(f"Högsta ubåt: {highest_sub.serial_number}, Höjd: {highest_sub.position[0]} meter")
+    print(f"Lägsta ubåt: {lowest_sub.serial_number}, Höjd: {lowest_sub.position[0]} meter")
 
 def main():
     # Se till att nödvändiga mappar finns
@@ -110,7 +110,7 @@ def main():
 
         # Visa information om den valda ubåten
         print(f"\nUbåt: {selected_submarine.serial_number}")
-        print(f"Position: Höjd {selected_submarine.position[0]}, Horisontell {selected_submarine.position[1]}")
+        print(f"Position: Höjd {selected_submarine.position[0]} meter, Horisontell {selected_submarine.position[1]} meter")
         print(f"Totalt antal rörelser: {len(selected_submarine.movement_log)}")
         print("")
 
@@ -133,11 +133,22 @@ def main():
                 submarines[serial] = submarine
 
             # Kontrollera kollisioner
+            # Kontrollera kollisioner
+            total_collisions = 0
             for sub in submarines.values():
-                if sub.serial_number != selected_submarine.serial_number:
-                    selected_submarine.check_collision(sub)
+               if sub.serial_number != selected_submarine.serial_number:
+                collisions = selected_submarine.check_collision(sub)
+                if collisions:
+            # Exkludera kollisioner på position (0, 0)
+                 filtered_collisions = [(pos, time) for pos, time in collisions if pos != (0, 0)]
+                 num_collisions = len(filtered_collisions)
+                 total_collisions += num_collisions
+                 if num_collisions > 0:
+                  print(f"Kollisioner upptäckta mellan {selected_submarine.serial_number} och {sub.serial_number}: {num_collisions} st")
+            print(f"Totalt antal kollisioner för ubåt {selected_submarine.serial_number}: {total_collisions}")
 
-            # Kontrollera möjligheten att avfyra torped i alla riktningar enligt uppgiftskravet
+
+            # Kontrollera möjligheten att avfyra torped i alla riktningar
             print("Kontrollerar möjligheten att avfyra torped...")
             directions = ['forward', 'up', 'down']
             for direction in directions:

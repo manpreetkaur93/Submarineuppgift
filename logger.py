@@ -2,10 +2,10 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 
-# Se till att 'logs' mappen finns
+# Skapar loggmappen om den inte finns
 os.makedirs('logs', exist_ok=True)
 
-# Huvudloggern med RotatingFileHandler
+# Huvudloggern för fel med RotatingFileHandler
 error_handler = RotatingFileHandler('logs/submarine_errors.log', maxBytes=1024*1024, backupCount=1)
 error_handler.setLevel(logging.ERROR)
 error_formatter = logging.Formatter("%(asctime)s %(message)s")
@@ -36,5 +36,7 @@ def movement_logger(func):
 def log_error(error_message):
     error_logger.error(error_message)
 
-def log_collision(submarine1, submarine2):
-    log_error(f"Kollision upptäckt mellan {submarine1.serial_number} och {submarine2.serial_number}")
+def log_collision(submarine1, submarine2, position, time):
+    message = f"Kollision upptäckt mellan {submarine1.serial_number} och {submarine2.serial_number} på position {position} vid tid {time}"
+    log_error(message)
+
