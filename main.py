@@ -4,7 +4,7 @@ from submarine import Submarine
 from sensor_data import SensorData
 from secret_manager import SecretManager
 from logger import log_collision, log_error
-import random  # Importera random för att välja slumpmässiga ubåtar
+import random
 
 # Kommenterad kod för nedladdning och uppackning av filer för att dessa kördes varje gång jag kör programmet även efter att jag la till ' if not os.path.exists' delen var programmet långsamt därför commeneterar dessa rader
 '''
