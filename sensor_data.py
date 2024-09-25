@@ -5,10 +5,7 @@ class SensorData:
     """Hanterar inläsning och analys av sensordata för en ubåt."""
 
     def __init__(self, sensor_file):
-        """
-        Initierar SensorData-objektet.Args:
-            sensor_file (str): Sökvägen till sensordatafilen.
-        """
+        """Initierar SensorData-objektet"""
         self.sensor_file = sensor_file
         self.sensor_failures = []
         self.error_count = {}
