@@ -2,16 +2,7 @@ import os
 from logger import movement_logger, log_collision
 
 class Submarine:
-    """
-    Representerar en ubåt med möjlighet att röra sig och kontrollera kollisioner.
-    Attributer:
-        serial_number (str): Ubåtens serienummer.
-        position (list): Ubåtens aktuella position [djup, horisontell].
-        movement_log (list): Lista över utförda rörelser.
-        positions (dict): Ordbok som lagrar positioner med tidsindex.
-        time_index (int): Tidsindex för rörelser.
-    """
-
+    """Representerar en ubåt med möjlighet att röra sig och kontrollera kollisioner."""
     def __init__(self, serial_number):
         """Initierar en ny ubåt."""
         self.serial_number = serial_number
