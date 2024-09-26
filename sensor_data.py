@@ -3,7 +3,6 @@ from logger import log_error
 
 class SensorData:
     """Hanterar inläsning och analys av sensordata för en ubåt."""
-
     def __init__(self, sensor_file):
         """Initierar SensorData-objektet"""
         self.sensor_file = sensor_file

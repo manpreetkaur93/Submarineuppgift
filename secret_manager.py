@@ -5,7 +5,6 @@ from logger import log_error
 
 class SecretManager:
     """ Hanterar säkerhetsaspekter som inläsning av hemliga nycklar och aktiveringskoder."""
-
     def __init__(self, secret_key_file, activation_code_file):
         """Initierar SecretManager."""
         self.secret_key_file = secret_key_file
