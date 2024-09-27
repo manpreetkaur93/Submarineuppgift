@@ -4,14 +4,12 @@ from logger import log_error
 class SensorData:
     """Hanterar inläsning och analys av sensordata för en ubåt."""
     def __init__(self, sensor_file):
-        """Initierar SensorData-objektet"""
         self.sensor_file = sensor_file
         self.sensor_failures = []
         self.error_count = {}
         self.total_sensors = 208  
 
     def load_sensor_data(self):
-        """Laddar in sensordata från filen."""
         if not os.path.exists(self.sensor_file):
             print(f"Sensordatafil hittades inte: {self.sensor_file}")
             log_error(f"Sensor data file not found: {self.sensor_file}")

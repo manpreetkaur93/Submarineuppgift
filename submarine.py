@@ -14,19 +14,16 @@ class Submarine:
 
     @movement_logger
     def move_up(self, value):
-        """Flyttar ubåten uppåt."""
         self.position[0] -= value  # Minska djupet när båten rör sig uppåt
         self.log_movement(f"up {value}")
 
     @movement_logger
     def move_down(self, value):
-        """Flyttar ubåten nedåt. """
         self.position[0] += value  # Öka djupet när båten rör sig nedåt
         self.log_movement(f"down {value}")
 
     @movement_logger
     def move_forward(self, value):
-        """Flyttar ubåten framåt."""
         self.position[1] += value  # Flytta horisontellt framåt
         self.log_movement(f"forward {value}")
 
@@ -49,7 +46,6 @@ class Submarine:
         return collision_positions
 
     def load_movements(self, filepath):
-        """ Laddar in rörelser från en fil."""
         if not os.path.exists(filepath):
             print(f"Rörelsefil hittades inte för ubåt {self.serial_number}")
             # Logga felet
